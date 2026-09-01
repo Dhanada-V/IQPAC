@@ -65,10 +65,10 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
         )
     )
 
-@router.get("/me", response_model=UserResponse, status_code=status.HTTP_501_NOT_IMPLEMENTED)
-async def get_me(current_user: dict = Depends(get_current_user)):
+@router.get("/me", response_model=UserResponse, status_code=status.HTTP_200_OK)
+def get_me(current_user: User = Depends(get_current_user)):
     """
     GET /api/auth/me (Protected: Bearer)
-    Returns details of the currently authenticated user (Day 3 scope).
+    Returns details of the currently authenticated user.
     """
-    raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Not Implemented")
+    return current_user

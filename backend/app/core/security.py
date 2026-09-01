@@ -1,10 +1,14 @@
+import uuid
 from typing import Optional
 from datetime import datetime, timedelta, timezone
 import jwt
 from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from sqlalchemy.orm import Session
 from app.core.config import settings
+from app.core.database import get_db
+from app.modules.auth.models import User
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 security_scheme = HTTPBearer(auto_error=False)
@@ -34,10 +38,12 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
 
-async def get_current_user(credentials: Optional[HTTPAuthorizationCredentials] = Depends(security_scheme)) -> dict:
+def get_current_user(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security_scheme),
+    db: Session = Depends(get_db)
+) -> User:
     """
-    Dependency stub for retrieving the current authenticated user.
-    No other module reimplements this signature.
+    FastAPI dependency for validating JWT bearer token and retrieving the authenticated user.
     """
     if not credentials or not credentials.credentials:
         raise HTTPException(
@@ -45,8 +51,34 @@ async def get_current_user(credentials: Optional[HTTPAuthorizationCredentials] =
             detail="Could not validate credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    return {
-        "id": "123e4567-e89b-12d3-a456-426614174000",
-        "email": "candidate@iqpac.com",
-        "full_name": "Stub Candidate"
-    }
+
+    try:
+        payload = jwt.decode(
+            credentials.credentials,
+            settings.SECRET_KEY,
+            algorithms=[settings.ALGORITHM]
+        )
+        user_id_str: Optional[str] = payload.get("sub")
+        if not user_id_str:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Could not validate credentials",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        user_id = uuid.UUID(user_id_str)
+    except (jwt.PyJWTError, ValueError, TypeError):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    return user
