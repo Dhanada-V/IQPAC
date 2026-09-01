@@ -7,6 +7,7 @@ class PracticeModuleItem(BaseModel):
     id: UUID
     title: str
     description: Optional[str] = None
+    domain: str
     total_questions: Optional[int] = None
 
 class PracticeQuestionsResponse(BaseModel):

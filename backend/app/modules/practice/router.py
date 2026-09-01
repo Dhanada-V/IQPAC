@@ -1,7 +1,10 @@
 from uuid import UUID
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+from app.core.database import get_db
 from app.core.security import get_current_user
+from app.modules.practice.models import PracticeModule
 from app.modules.practice.schemas import (
     PracticeModuleItem,
     PracticeQuestionsResponse,
@@ -11,13 +14,31 @@ from app.modules.practice.schemas import (
 
 router = APIRouter(prefix="/practice", tags=["Practice"])
 
-@router.get("/modules", response_model=List[PracticeModuleItem], status_code=status.HTTP_501_NOT_IMPLEMENTED)
-async def list_modules(current_user: dict = Depends(get_current_user)):
+@router.get("/modules", response_model=List[PracticeModuleItem], status_code=status.HTTP_200_OK)
+async def list_modules(
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
     """
     GET /api/practice/modules (Protected: Bearer)
-    Lists all available practice modules.
+    Lists active practice modules.
     """
-    raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Not Implemented")
+    modules = (
+        db.query(PracticeModule)
+        .filter(PracticeModule.is_active.is_(True))
+        .order_by(PracticeModule.title.asc())
+        .all()
+    )
+    return [
+        PracticeModuleItem(
+            id=module.id,
+            title=module.title,
+            description=module.description,
+            domain=module.domain,
+            total_questions=len(module.questions) if module.questions else 0,
+        )
+        for module in modules
+    ]
 
 @router.get("/modules/{id}/questions", response_model=PracticeQuestionsResponse, status_code=status.HTTP_501_NOT_IMPLEMENTED)
 async def get_module_questions(id: UUID, current_user: dict = Depends(get_current_user)):
