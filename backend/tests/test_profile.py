@@ -228,4 +228,26 @@ def test_profile_endpoints():
 
     assert res_malformed_skills.status_code == 422
 
-    
+    # ------------------------------------------------------------------
+    # 6. PUT /api/profile with partial payload -> preserves other fields
+    # ------------------------------------------------------------------
+    partial_payload = {
+        "skills": ["Python", "FastAPI", "React", "Docker", "AWS"],
+    }
+    res_partial = client.put("/api/profile", json=partial_payload)
+    assert res_partial.status_code == 200
+    data_partial = res_partial.json()
+    assert data_partial["skills"] == ["Python", "FastAPI", "React", "Docker", "AWS"]
+    # Verify personal_details and education_details were preserved
+    assert data_partial["personal_details"]["bio"] == "Software Engineer specializing in Python & React"
+    assert data_partial["education_details"]["gpa"] == 3.9
+
+    # ------------------------------------------------------------------
+    # 7. PUT /api/profile with empty skills list
+    # ------------------------------------------------------------------
+    empty_skills_payload = {
+        "skills": []
+    }
+    res_empty_skills = client.put("/api/profile", json=empty_skills_payload)
+    assert res_empty_skills.status_code == 200
+    assert res_empty_skills.json()["skills"] == []
