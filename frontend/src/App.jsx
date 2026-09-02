@@ -6,6 +6,7 @@ import Profile from './pages/Profile';
 import Assessment from './pages/Assessment';
 import Score from './pages/Score';
 import Practice from './pages/Practice';
+import PracticeModule from './pages/PracticeModule';
 
 export default function App() {
   return (
@@ -60,6 +61,7 @@ export default function App() {
             <Route path="/assessment" element={<Assessment />} />
             <Route path="/score" element={<Score />} />
             <Route path="/practice" element={<Practice />} />
+            <Route path="/practice/:moduleId" element={<PracticeModule />} />
           </Routes>
         </main>
       </div>
