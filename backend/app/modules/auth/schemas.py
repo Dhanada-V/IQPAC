@@ -1,5 +1,5 @@
 from typing import Optional
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, ConfigDict
 from datetime import datetime
 from uuid import UUID
 
@@ -14,6 +14,8 @@ class RegisterRequest(BaseModel):
     graduation_year: Optional[int] = None
 
 class UserResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: UUID
     full_name: str
     email: EmailStr
@@ -29,7 +31,14 @@ class LoginRequest(BaseModel):
     email: EmailStr
     password: str
 
+class UserLoginInfo(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    email: EmailStr
+    full_name: str
+
 class LoginResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
-    user: dict
+    user: UserLoginInfo
