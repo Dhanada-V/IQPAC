@@ -21,7 +21,7 @@ async def start_assessment(current_user: dict = Depends(get_current_user), db: S
     POST /api/assessment/start (Protected: Bearer)
     Starts a new assessment session for the candidate.
     """
-    candidate_id = UUID(current_user["id"])
+    candidate_id = current_user.id
     return services.start_assessment_session(db, candidate_id)
 
 @router.post("/answer", response_model=AssessmentAnswerResponse, status_code=status.HTTP_200_OK)
@@ -30,7 +30,7 @@ async def answer_question(payload: AssessmentAnswerRequest, current_user: dict =
     POST /api/assessment/answer (Protected: Bearer)
     Submits an answer for a specific question within an active assessment session.
     """
-    candidate_id = UUID(current_user["id"])
+    candidate_id = current_user.id
     return services.answer_assessment_question(db, payload, candidate_id)
 
 @router.post("/complete", response_model=AssessmentCompleteResponse, status_code=status.HTTP_200_OK)
@@ -39,7 +39,7 @@ async def complete_assessment(payload: AssessmentCompleteRequest, current_user: 
     POST /api/assessment/complete (Protected: Bearer)
     Finalizes and completes an assessment session.
     """
-    candidate_id = UUID(current_user["id"])
+    candidate_id = current_user.id
     return services.complete_assessment_session(db, payload, candidate_id)
 
 @router.get("/score/{session_id}", response_model=AssessmentScoreResponse, status_code=status.HTTP_200_OK)
@@ -48,5 +48,5 @@ async def get_score(session_id: UUID, current_user: dict = Depends(get_current_u
     GET /api/assessment/score/{session_id} (Protected: Bearer)
     Retrieves the score and summary of a completed assessment session.
     """
-    candidate_id = UUID(current_user["id"])
+    candidate_id = current_user.id
     return services.get_assessment_score(db, session_id, candidate_id)
