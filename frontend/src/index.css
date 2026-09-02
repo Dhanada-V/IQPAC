@@ -11,10 +11,18 @@
   --error: #ef4444;
 }
 
+/* =========================
+   GLOBAL
+   ========================= */
+
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+}
+
+html {
+  min-height: 100%;
 }
 
 body {
@@ -25,11 +33,26 @@ body {
   line-height: 1.6;
 }
 
+button,
+input,
+textarea,
+select {
+  font-family: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
 .app-container {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
 }
+
+/* =========================
+   NAVBAR
+   ========================= */
 
 .navbar {
   display: flex;
@@ -71,7 +94,8 @@ body {
   transition: all 0.2s ease;
 }
 
-.nav-link:hover, .nav-link.active {
+.nav-link:hover,
+.nav-link.active {
   color: var(--text-main);
   background: rgba(255, 255, 255, 0.05);
 }
@@ -81,6 +105,10 @@ body {
   border: 1px solid rgba(99, 102, 241, 0.2);
 }
 
+/* =========================
+   MAIN CONTENT
+   ========================= */
+
 .main-content {
   flex: 1;
   padding: 2.5rem 2rem;
@@ -88,6 +116,10 @@ body {
   margin: 0 auto;
   width: 100%;
 }
+
+/* =========================
+   PAGE CARD
+   ========================= */
 
 .page-card {
   background: var(--bg-card);
@@ -122,6 +154,10 @@ body {
   font-size: 0.95rem;
 }
 
+/* =========================
+   BADGE
+   ========================= */
+
 .badge {
   display: inline-block;
   padding: 0.25rem 0.75rem;
@@ -136,6 +172,10 @@ body {
   margin-bottom: 1rem;
 }
 
+/* =========================
+   ROUTE INFO
+   ========================= */
+
 .route-info {
   margin-top: 1.5rem;
   padding: 1rem;
@@ -145,6 +185,10 @@ body {
   font-size: 0.85rem;
   color: #a5b4fc;
 }
+
+/* =========================
+   MODULE GRID
+   ========================= */
 
 .module-grid {
   display: grid;
@@ -182,16 +226,15 @@ body {
   font-size: 0.95rem;
   flex: 1;
 }
-/* UI Elements for Profile */
+
+/* =========================
+   BUTTONS
+   ========================= */
 
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-
-  .btn {
-  display: inline-flex;
-  align-items: center;
   gap: 0.5rem;
   padding: 0.65rem 1.25rem;
   border-radius: 10px;
@@ -217,8 +260,6 @@ body {
   background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
   box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
 }
-  
-}
 
 .btn-secondary {
   background: rgba(255, 255, 255, 0.08);
@@ -229,6 +270,47 @@ body {
 .btn-secondary:hover {
   background: rgba(255, 255, 255, 0.14);
 }
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* =========================
+   ALERTS
+   ========================= */
+
+.alert-box {
+  padding: 1rem 1.25rem;
+  border-radius: 10px;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.alert-error {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+}
+
+.alert-success {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #6ee7b7;
+}
+
+.alert-info {
+  background: rgba(99, 102, 241, 0.15);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  color: #a5b4fc;
+}
+
+/* =========================
+   STATUS
+   ========================= */
 
 .status-message,
 .status-panel {
@@ -250,11 +332,200 @@ body {
   border: 1px solid rgba(248, 113, 113, 0.35);
 }
 
+/* =========================
+   SECTION HEADINGS
+   ========================= */
+
 .section-heading {
   font-size: 1.2rem;
   font-weight: 700;
   margin-bottom: 0.75rem;
 }
+
+/* =========================
+   FORM
+   ========================= */
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.25rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.form-group.full-width {
+  grid-column: 1 / -1;
+}
+
+.form-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.form-input,
+.form-textarea {
+  width: 100%;
+  padding: 0.65rem 0.9rem;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-main);
+  font-family: inherit;
+  font-size: 0.9rem;
+  transition: border-color 0.2s ease;
+}
+
+.form-input:focus,
+.form-textarea:focus {
+  outline: none;
+  border-color: var(--primary-accent);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 90px;
+}
+
+/* =========================
+   LOGIN PAGE
+   ========================= */
+
+.login-card {
+  max-width: 585px;
+  margin: 0 auto;
+}
+
+.login-card form {
+  margin-top: 1.5rem;
+}
+
+.login-card .form-group {
+  margin-bottom: 1.25rem;
+}
+
+.login-card .form-group label {
+  display: block;
+  margin-bottom: 0.45rem;
+  color: #a5b4d4;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.login-card .form-group input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: #f0f4fc;
+  border: 1px solid #dbe4f0;
+  border-radius: 8px;
+  color: #111827;
+  font-family: inherit;
+  font-size: 0.95rem;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.login-card .form-group input:focus {
+  border-color: var(--primary-accent);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+.login-card .form-group input::placeholder {
+  color: #7b879d;
+}
+
+/* Login Button */
+
+.login-button {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  margin-top: 0.5rem;
+
+  background: linear-gradient(
+    135deg,
+    #6366f1 0%,
+    #4f46e5 100%
+  );
+
+  border: none;
+  border-radius: 8px;
+
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+
+  transition: all 0.2s ease;
+}
+
+.login-button:hover:not(:disabled) {
+  background: linear-gradient(
+    135deg,
+    #4f46e5 0%,
+    #4338ca 100%
+  );
+
+  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
+  transform: translateY(-1px);
+}
+
+.login-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.login-button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* Login Error */
+
+.error-message {
+  margin: 0.75rem 0;
+  padding: 0.75rem 1rem;
+
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 8px;
+
+  color: #fca5a5;
+  font-size: 0.9rem;
+}
+
+/* Register Link */
+
+.register-link {
+  margin-top: 1.5rem;
+  text-align: center;
+
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.register-link a {
+  color: #818cf8;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.register-link a:hover {
+  color: #a5b4fc;
+  text-decoration: underline;
+}
+
+/* =========================
+   PRACTICE
+   ========================= */
 
 .practice-questions-panel {
   margin-top: 0.5rem;
@@ -268,7 +539,6 @@ body {
   color: var(--text-muted);
 }
 
-/* Practice Flow & Questions UI */
 .practice-question-wrapper {
   display: flex;
   flex-direction: column;
@@ -387,6 +657,10 @@ body {
   justify-content: flex-end;
 }
 
+/* =========================
+   FEEDBACK
+   ========================= */
+
 .feedback-card {
   padding: 1.25rem 1.5rem;
   border-radius: 14px;
@@ -437,7 +711,10 @@ body {
   line-height: 1.5;
 }
 
-/* Completion Card & Summary */
+/* =========================
+   COMPLETION CARD
+   ========================= */
+
 .completion-card {
   display: flex;
   flex-direction: column;
@@ -506,69 +783,9 @@ body {
   color: #818cf8;
 }
 
-@media (max-width: 720px) {
-  .navbar {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-  }
-
-  .nav-links {
-    flex-wrap: wrap;
-  }
-
-  .main-content {
-    padding: 1.5rem 1rem;
-  }
-
-  .page-card {
-    padding: 1.5rem;
-  }
-
-  .metrics-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-  border: 1px solid var(--border-color);
-}
-
-.btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.15);
-}
-
-.btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.alert-box {
-  padding: 1rem 1.25rem;
-  border-radius: 10px;
-  margin-bottom: 1.5rem;
-  font-size: 0.9rem;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.alert-error {
-  background: rgba(239, 68, 68, 0.15);
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  color: #fca5a5;
-}
-
-.alert-success {
-  background: rgba(16, 185, 129, 0.15);
-  border: 1px solid rgba(16, 185, 129, 0.3);
-  color: #6ee7b7;
-}
-
-.alert-info {
-  background: rgba(99, 102, 241, 0.15);
-  border: 1px solid rgba(99, 102, 241, 0.3);
-  color: #a5b4fc;
-}
+/* =========================
+   PROFILE
+   ========================= */
 
 .profile-grid {
   display: grid;
@@ -630,51 +847,9 @@ body {
   font-weight: 500;
 }
 
-.form-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.25rem;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-
-}
-
-.form-group.full-width {
-  grid-column: 1 / -1;
-}
-
-.form-label {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--text-muted);
-}
-
-.form-input, .form-textarea {
-  width: 100%;
-  padding: 0.65rem 0.9rem;
-  background: rgba(15, 23, 42, 0.8);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  color: var(--text-main);
-  font-family: inherit;
-  font-size: 0.9rem;
-  transition: border-color 0.2s ease;
-}
-
-.form-input:focus, .form-textarea:focus {
-  outline: none;
-  border-color: var(--primary-accent);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
-}
-
-.form-textarea {
-  resize: vertical;
-  min-height: 90px;
-}
+/* =========================
+   EMPTY / LOADING
+   ========================= */
 
 .empty-state {
   text-align: center;
@@ -708,5 +883,39 @@ body {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* =========================
+   RESPONSIVE
+   ========================= */
+
+@media (max-width: 720px) {
+  .navbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .nav-links {
+    flex-wrap: wrap;
+  }
+
+  .main-content {
+    padding: 1.5rem 1rem;
+  }
+
+  .page-card {
+    padding: 1.5rem;
+  }
+
+  .metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .login-card {
+    max-width: 100%;
+  }
 }

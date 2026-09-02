@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
+const API_URL = 'http://localhost:8000';
+
 export default function Profile() {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -8,7 +10,6 @@ export default function Profile() {
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // Form state
   const [formData, setFormData] = useState({
     bio: '',
     location: '',
@@ -19,39 +20,20 @@ export default function Profile() {
     resume_url: '',
   });
 
-  const token = localStorage.getItem('token') || 'stubbed_jwt_token';
+  // Get JWT token saved during login
+  const token = localStorage.getItem('access_token');
 
-  const fetchProfile = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await fetch('/api/profile', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.status === 404) {
-        setProfile(null);
-      } else if (!response.ok) {
-        throw new Error(`Failed to load profile (Status: ${response.status})`);
-      } else {
-        const data = await response.json();
-        setProfile(data);
-        populateForm(data);
-      }
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // --------------------------------------------------
+  // Populate form from profile data
+  // --------------------------------------------------
   const populateForm = (data) => {
     const personal = data.personal_details || {};
     const education = data.education_details || {};
-    const skillsList = Array.isArray(data.skills) ? data.skills.join(', ') : '';
+
+    const skillsList = Array.isArray(data.skills)
+      ? data.skills.join(', ')
+      : '';
+
     const achievementsList = Array.isArray(education.achievements)
       ? education.achievements.join(', ')
       : education.achievements || '';
@@ -60,34 +42,113 @@ export default function Profile() {
       bio: personal.bio || '',
       location: personal.location || '',
       linkedin: personal.linkedin || '',
-      gpa: education.gpa !== undefined && education.gpa !== null ? String(education.gpa) : '',
+      gpa:
+        education.gpa !== undefined && education.gpa !== null
+          ? String(education.gpa)
+          : '',
       achievements: achievementsList,
       skills: skillsList,
       resume_url: data.resume_url || '',
     });
   };
 
+  // --------------------------------------------------
+  // Load candidate profile
+  // --------------------------------------------------
+  const fetchProfile = async () => {
+    setLoading(true);
+    setError(null);
+
+    if (!token) {
+      setError('You are not logged in. Please login first.');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/api/profile`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/json',
+        },
+      });
+
+      if (response.status === 404) {
+        // User is logged in but does not have a profile yet
+        setProfile(null);
+        return;
+      }
+
+      if (response.status === 401) {
+        throw new Error('Your login session has expired. Please login again.');
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          `Failed to load profile (Status: ${response.status})`
+        );
+      }
+
+      const data = await response.json();
+
+      setProfile(data);
+      populateForm(data);
+    } catch (err) {
+      console.error('Profile loading error:', err);
+      setError(err.message || 'Unable to load profile.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load profile when page opens
   useEffect(() => {
     fetchProfile();
   }, []);
 
+  // --------------------------------------------------
+  // Handle form changes
+  // --------------------------------------------------
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    setFormData((previous) => ({
+      ...previous,
+      [name]: value,
+    }));
   };
 
+  // --------------------------------------------------
+  // Create / Update profile
+  // --------------------------------------------------
   const handleSave = async (e) => {
     e.preventDefault();
+
     setSaving(true);
     setError(null);
     setSuccess(null);
 
-    // Parse achievements and skills from comma-separated string
+    if (!token) {
+      setError('You are not logged in. Please login first.');
+      setSaving(false);
+      return;
+    }
+
+    // Convert comma-separated skills into array
     const skillsArray = formData.skills
-      ? formData.skills.split(',').map((s) => s.trim()).filter(Boolean)
+      ? formData.skills
+        .split(',')
+        .map((skill) => skill.trim())
+        .filter(Boolean)
       : [];
+
+    // Convert comma-separated achievements into array
     const achievementsArray = formData.achievements
-      ? formData.achievements.split(',').map((a) => a.trim()).filter(Boolean)
+      ? formData.achievements
+        .split(',')
+        .map((achievement) => achievement.trim())
+        .filter(Boolean)
       : [];
 
     const payload = {
@@ -96,41 +157,60 @@ export default function Profile() {
         location: formData.location,
         linkedin: formData.linkedin,
       },
+
       education_details: {
         gpa: formData.gpa !== '' ? parseFloat(formData.gpa) : null,
         achievements: achievementsArray,
       },
+
       skills: skillsArray,
+
       resume_url: formData.resume_url || null,
     };
 
     try {
-      const response = await fetch('/api/profile', {
+      const response = await fetch(`${API_URL}/api/profile`, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
+          Accept: 'application/json',
         },
         body: JSON.stringify(payload),
       });
 
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
-        throw new Error(errData.detail || `Failed to save profile (${response.status})`);
+      if (response.status === 401) {
+        throw new Error('Your login session has expired. Please login again.');
       }
 
-      const updated = await response.json();
-      setProfile(updated);
-      populateForm(updated);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+
+        throw new Error(
+          errorData.detail ||
+          errorData.message ||
+          `Failed to save profile (Status: ${response.status})`
+        );
+      }
+
+      const updatedProfile = await response.json();
+
+      setProfile(updatedProfile);
+      populateForm(updatedProfile);
       setIsEditing(false);
       setSuccess('Candidate profile saved successfully!');
+
     } catch (err) {
-      setError(err.message);
+      console.error('Profile save error:', err);
+      setError(err.message || 'Unable to save profile.');
     } finally {
       setSaving(false);
     }
   };
 
+  // --------------------------------------------------
+  // Create new profile
+  // --------------------------------------------------
   const handleCreateNew = () => {
     setFormData({
       bio: '',
@@ -141,57 +221,107 @@ export default function Profile() {
       skills: '',
       resume_url: '',
     });
+
+    setError(null);
+    setSuccess(null);
     setIsEditing(true);
   };
 
+  // --------------------------------------------------
+  // Cancel editing
+  // --------------------------------------------------
+  const handleCancel = () => {
+    setIsEditing(false);
+    setError(null);
+
+    if (profile) {
+      populateForm(profile);
+    }
+  };
+
+  // --------------------------------------------------
+  // Loading screen
+  // --------------------------------------------------
+  if (loading) {
+    return (
+      <div className="page-card">
+        <div className="loading-container">
+          <div className="spinner"></div>
+          <span>Loading candidate profile...</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="page-card">
+
+      {/* Header */}
       <div className="page-header-row">
         <div>
           <span className="badge">Candidate Module</span>
-          <h1 className="page-title">Candidate Profile</h1>
-          <p className="page-subtitle">Manage personal details, education background, skills, and resume.</p>
+
+          <h1 className="page-title">
+            Candidate Profile
+          </h1>
+
+          <p className="page-subtitle">
+            Manage personal details, education background,
+            skills, and resume.
+          </p>
         </div>
-        {!loading && profile && !isEditing && (
-          <button className="btn btn-primary" onClick={() => setIsEditing(true)}>
+
+        {/* Edit button */}
+        {!isEditing && profile && (
+          <button
+            className="btn btn-primary"
+            onClick={() => setIsEditing(true)}
+          >
             ✏️ Edit Profile
           </button>
         )}
-        {!loading && isEditing && (
+
+        {/* Cancel button */}
+        {isEditing && (
           <button
             className="btn btn-secondary"
-            onClick={() => {
-              setIsEditing(false);
-              if (profile) populateForm(profile);
-            }}
+            onClick={handleCancel}
           >
             Cancel
           </button>
         )}
       </div>
 
+      {/* Success message */}
       {success && (
         <div className="alert-box alert-success">
-          <span>✅</span> {success}
+          <span>✅</span>
+          {success}
         </div>
       )}
 
+      {/* Error message */}
       {error && (
         <div className="alert-box alert-error">
-          <span>⚠️</span> {error}
+          <span>⚠️</span>
+          {error}
         </div>
       )}
 
-      {loading ? (
-        <div className="loading-container">
-          <div className="spinner"></div>
-          <span>Loading candidate profile...</span>
-        </div>
-      ) : isEditing ? (
+      {/* ==================================================
+          CREATE / EDIT PROFILE FORM
+          ================================================== */}
+      {isEditing ? (
         <form onSubmit={handleSave}>
+
           <div className="form-grid">
+
+            {/* Bio */}
             <div className="form-group full-width">
-              <label className="form-label">Bio</label>
+              <label className="form-label">
+                Bio
+              </label>
+
               <textarea
                 name="bio"
                 className="form-textarea"
@@ -201,32 +331,44 @@ export default function Profile() {
               />
             </div>
 
+            {/* Location */}
             <div className="form-group">
-              <label className="form-label">Location</label>
+              <label className="form-label">
+                Location
+              </label>
+
               <input
                 type="text"
                 name="location"
                 className="form-input"
-                placeholder="e.g. New York, USA"
+                placeholder="e.g. Kerala, India"
                 value={formData.location}
                 onChange={handleChange}
               />
             </div>
 
+            {/* LinkedIn */}
             <div className="form-group">
-              <label className="form-label">LinkedIn Profile URL</label>
+              <label className="form-label">
+                LinkedIn Profile URL
+              </label>
+
               <input
-                type="text"
+                type="url"
                 name="linkedin"
                 className="form-input"
-                placeholder="e.g. https://linkedin.com/in/janedoe"
+                placeholder="https://linkedin.com/in/yourname"
                 value={formData.linkedin}
                 onChange={handleChange}
               />
             </div>
 
+            {/* GPA */}
             <div className="form-group">
-              <label className="form-label">GPA</label>
+              <label className="form-label">
+                GPA
+              </label>
+
               <input
                 type="number"
                 step="0.01"
@@ -238,20 +380,28 @@ export default function Profile() {
               />
             </div>
 
+            {/* Achievements */}
             <div className="form-group">
-              <label className="form-label">Achievements (comma-separated)</label>
+              <label className="form-label">
+                Achievements
+              </label>
+
               <input
                 type="text"
                 name="achievements"
                 className="form-input"
-                placeholder="e.g. Dean's List 2024, Hackathon Winner"
+                placeholder="e.g. Hackathon Winner, Dean's List"
                 value={formData.achievements}
                 onChange={handleChange}
               />
             </div>
 
+            {/* Skills */}
             <div className="form-group full-width">
-              <label className="form-label">Skills (comma-separated)</label>
+              <label className="form-label">
+                Skills
+              </label>
+
               <input
                 type="text"
                 name="skills"
@@ -260,63 +410,143 @@ export default function Profile() {
                 value={formData.skills}
                 onChange={handleChange}
               />
+
+              <small style={{ color: 'var(--text-muted)' }}>
+                Separate skills using commas.
+              </small>
             </div>
 
+            {/* Resume */}
             <div className="form-group full-width">
-              <label className="form-label">Resume URL</label>
+              <label className="form-label">
+                Resume URL
+              </label>
+
               <input
-                type="text"
+                type="url"
                 name="resume_url"
                 className="form-input"
-                placeholder="e.g. https://storage.example.com/resumes/jane_doe.pdf"
+                placeholder="https://example.com/resume.pdf"
                 value={formData.resume_url}
                 onChange={handleChange}
               />
             </div>
+
           </div>
 
-          <div style={{ marginTop: '1.5rem', display: 'flex', gap: '1rem' }}>
-            <button type="submit" className="btn btn-primary" disabled={saving}>
+          {/* Save button */}
+          <div
+            style={{
+              marginTop: '1.5rem',
+              display: 'flex',
+              gap: '1rem',
+            }}
+          >
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={saving}
+            >
               {saving ? 'Saving...' : '💾 Save Profile'}
             </button>
+
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={handleCancel}
+              disabled={saving}
+            >
+              Cancel
+            </button>
           </div>
+
         </form>
+
       ) : !profile ? (
+
+        /* ==================================================
+           NO PROFILE
+           ================================================== */
         <div className="empty-state">
-          <div className="empty-icon">📁</div>
-          <h3>No Candidate Profile Found</h3>
-          <p style={{ color: 'var(--text-muted)', margin: '0.5rem 0 1.5rem 0' }}>
-            You have not set up your candidate profile yet. Create one to highlight your skills and achievements.
+
+          <div className="empty-icon">
+            📁
+          </div>
+
+          <h3>
+            No Candidate Profile Found
+          </h3>
+
+          <p
+            style={{
+              color: 'var(--text-muted)',
+              margin: '0.5rem 0 1.5rem',
+            }}
+          >
+            You have not set up your candidate profile yet.
+            Create one to highlight your skills and achievements.
           </p>
-          <button className="btn btn-primary" onClick={handleCreateNew}>
+
+          <button
+            className="btn btn-primary"
+            onClick={handleCreateNew}
+          >
             ✨ Create Candidate Profile
           </button>
+
         </div>
+
       ) : (
+
+        /* ==================================================
+           DISPLAY PROFILE
+           ================================================== */
         <div className="profile-grid">
+
+          {/* Personal Details */}
           <div className="profile-card-section">
-            <h3>👤 Personal Details</h3>
+
+            <h3>
+              👤 Personal Details
+            </h3>
+
             <div className="info-item">
-              <span className="info-label">Bio</span>
+              <span className="info-label">
+                Bio
+              </span>
+
               <span className="info-value">
-                {profile.personal_details?.bio || 'Not provided'}
+                {profile.personal_details?.bio ||
+                  'Not provided'}
               </span>
             </div>
+
             <div className="info-item">
-              <span className="info-label">Location</span>
+              <span className="info-label">
+                Location
+              </span>
+
               <span className="info-value">
-                {profile.personal_details?.location || 'Not provided'}
+                {profile.personal_details?.location ||
+                  'Not provided'}
               </span>
             </div>
+
             <div className="info-item">
-              <span className="info-label">LinkedIn</span>
+              <span className="info-label">
+                LinkedIn
+              </span>
+
               <span className="info-value">
                 {profile.personal_details?.linkedin ? (
                   <a
                     href={profile.personal_details.linkedin}
                     target="_blank"
                     rel="noreferrer"
-                    style={{ color: '#818cf8', textDecoration: 'none' }}
+                    style={{
+                      color: '#818cf8',
+                      textDecoration: 'none',
+                    }}
                   >
                     {profile.personal_details.linkedin}
                   </a>
@@ -325,61 +555,118 @@ export default function Profile() {
                 )}
               </span>
             </div>
+
           </div>
 
+          {/* Education */}
           <div className="profile-card-section">
-            <h3>🎓 Education & Achievements</h3>
+
+            <h3>
+              🎓 Education & Achievements
+            </h3>
+
             <div className="info-item">
-              <span className="info-label">GPA</span>
+              <span className="info-label">
+                GPA
+              </span>
+
               <span className="info-value">
-                {profile.education_details?.gpa ?? 'Not provided'}
+                {profile.education_details?.gpa ??
+                  'Not provided'}
               </span>
             </div>
+
             <div className="info-item">
-              <span className="info-label">Achievements</span>
+              <span className="info-label">
+                Achievements
+              </span>
+
               <span className="info-value">
-                {Array.isArray(profile.education_details?.achievements) &&
-                profile.education_details.achievements.length > 0
+                {Array.isArray(
+                  profile.education_details?.achievements
+                ) &&
+                  profile.education_details.achievements.length > 0
                   ? profile.education_details.achievements.join(', ')
                   : 'None listed'}
               </span>
             </div>
+
           </div>
 
-          <div className="profile-card-section" style={{ gridColumn: '1 / -1' }}>
-            <h3>🛠️ Technical Skills</h3>
-            {Array.isArray(profile.skills) && profile.skills.length > 0 ? (
+          {/* Skills */}
+          <div
+            className="profile-card-section"
+            style={{ gridColumn: '1 / -1' }}
+          >
+
+            <h3>
+              🛠️ Technical Skills
+            </h3>
+
+            {Array.isArray(profile.skills) &&
+              profile.skills.length > 0 ? (
+
               <div className="skills-container">
+
                 {profile.skills.map((skill, index) => (
-                  <span key={index} className="skill-chip">
+                  <span
+                    key={index}
+                    className="skill-chip"
+                  >
                     {skill}
                   </span>
                 ))}
+
               </div>
+
             ) : (
-              <span className="info-value">No skills listed yet</span>
+              <span className="info-value">
+                No skills listed yet
+              </span>
             )}
+
           </div>
 
-          <div className="profile-card-section" style={{ gridColumn: '1 / -1' }}>
-            <h3>📄 Resume & Metadata</h3>
+          {/* Resume */}
+          <div
+            className="profile-card-section"
+            style={{ gridColumn: '1 / -1' }}
+          >
+
+            <h3>
+              📄 Resume & Metadata
+            </h3>
+
             <div className="info-item">
-              <span className="info-label">Resume Link</span>
+
+              <span className="info-label">
+                Resume Link
+              </span>
+
               <span className="info-value">
+
                 {profile.resume_url ? (
+
                   <a
                     href={profile.resume_url}
                     target="_blank"
                     rel="noreferrer"
-                    style={{ color: '#818cf8', textDecoration: 'none' }}
+                    style={{
+                      color: '#818cf8',
+                      textDecoration: 'none',
+                    }}
                   >
                     {profile.resume_url} 🔗
                   </a>
+
                 ) : (
                   'No resume URL uploaded'
                 )}
+
               </span>
+
             </div>
+
             <div
               style={{
                 display: 'flex',
@@ -387,18 +674,40 @@ export default function Profile() {
                 marginTop: '1rem',
                 fontSize: '0.8rem',
                 color: 'var(--text-muted)',
+                flexWrap: 'wrap',
               }}
             >
-              <span>Created: {new Date(profile.created_at).toLocaleString()}</span>
-              <span>Updated: {new Date(profile.updated_at).toLocaleString()}</span>
+
+              {profile.created_at && (
+                <span>
+                  Created:{' '}
+                  {new Date(
+                    profile.created_at
+                  ).toLocaleString()}
+                </span>
+              )}
+
+              {profile.updated_at && (
+                <span>
+                  Updated:{' '}
+                  {new Date(
+                    profile.updated_at
+                  ).toLocaleString()}
+                </span>
+              )}
+
             </div>
+
           </div>
+
         </div>
       )}
 
+      {/* API information */}
       <div className="route-info">
         Route: /profile | Endpoints: GET /api/profile, PUT /api/profile
       </div>
+
     </div>
   );
 }

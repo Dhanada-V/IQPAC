@@ -1,8 +1,10 @@
 from uuid import UUID, uuid4
 from typing import List
 from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+
 from app.core.database import get_db
 from app.core.security import get_current_user
 from app.modules.practice.models import PracticeModule, PracticeAttempt
@@ -13,61 +15,91 @@ from app.modules.practice.schemas import (
     PracticeCheckAnswerRequest,
     PracticeCheckAnswerResponse,
     PracticeSubmitRequest,
-    PracticeAttemptResponse
+    PracticeAttemptResponse,
 )
 
 router = APIRouter(prefix="/practice", tags=["Practice"])
 
-@router.get("/modules", response_model=List[PracticeModuleItem], status_code=status.HTTP_200_OK)
+
+@router.get(
+    "/modules",
+    response_model=List[PracticeModuleItem],
+    status_code=status.HTTP_200_OK,
+)
 async def list_modules(
-    current_user: dict = Depends(get_current_user),
+    current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """
-    GET /api/practice/modules (Protected: Bearer)
-    Lists active practice modules.
+    GET /api/practice/modules
+
+    Protected endpoint.
+    Lists all active practice modules.
     """
+
     modules = (
         db.query(PracticeModule)
         .filter(PracticeModule.is_active.is_(True))
         .order_by(PracticeModule.title.asc())
         .all()
     )
+
     return [
         PracticeModuleItem(
             id=module.id,
             title=module.title,
             description=module.description,
             domain=module.domain,
-            total_questions=len(module.questions) if module.questions else 0,
+            total_questions=len(module.questions)
+            if module.questions
+            else 0,
         )
         for module in modules
     ]
 
-@router.get("/modules/{id}/questions", response_model=PracticeQuestionsResponse, status_code=status.HTTP_200_OK)
+
+@router.get(
+    "/modules/{id}/questions",
+    response_model=PracticeQuestionsResponse,
+    status_code=status.HTTP_200_OK,
+)
 async def get_module_questions(
     id: UUID,
-    current_user: dict = Depends(get_current_user),
+    current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """
-    GET /api/practice/modules/{id}/questions (Protected: Bearer)
+    GET /api/practice/modules/{id}/questions
+
+    Protected endpoint.
     Retrieves questions for a specific practice module.
-    Correct answers and explanations are explicitly excluded from this response.
+
+    Correct answers and explanations are excluded
+    from the questions response.
     """
-    module = db.query(PracticeModule).filter(PracticeModule.id == id, PracticeModule.is_active.is_(True)).first()
+
+    module = (
+        db.query(PracticeModule)
+        .filter(
+            PracticeModule.id == id,
+            PracticeModule.is_active.is_(True),
+        )
+        .first()
+    )
+
     if not module:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Practice module not found."
+            detail="Practice module not found.",
         )
 
     raw_questions = module.questions or []
+
     sanitized_questions = [
         PracticeQuestionItem(
             question_id=str(q.get("question_id", idx)),
             prompt=q.get("prompt", ""),
-            options=q.get("options", [])
+            options=q.get("options", []),
         )
         for idx, q in enumerate(raw_questions)
     ]
@@ -75,31 +107,50 @@ async def get_module_questions(
     return PracticeQuestionsResponse(
         module_id=module.id,
         title=module.title,
-        questions=sanitized_questions
+        questions=sanitized_questions,
     )
 
-@router.post("/modules/{id}/check-answer", response_model=PracticeCheckAnswerResponse, status_code=status.HTTP_200_OK)
+
+@router.post(
+    "/modules/{id}/check-answer",
+    response_model=PracticeCheckAnswerResponse,
+    status_code=status.HTTP_200_OK,
+)
 async def check_question_answer(
     id: UUID,
     payload: PracticeCheckAnswerRequest,
-    current_user: dict = Depends(get_current_user),
+    current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """
-    POST /api/practice/modules/{id}/check-answer (Protected: Bearer)
-    Evaluates candidate's selected answer for a specific question and returns feedback.
+    POST /api/practice/modules/{id}/check-answer
+
+    Protected endpoint.
+    Checks the selected answer and returns feedback.
     """
-    module = db.query(PracticeModule).filter(PracticeModule.id == id, PracticeModule.is_active.is_(True)).first()
+
+    module = (
+        db.query(PracticeModule)
+        .filter(
+            PracticeModule.id == id,
+            PracticeModule.is_active.is_(True),
+        )
+        .first()
+    )
+
     if not module:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Practice module not found."
+            detail="Practice module not found.",
         )
 
     raw_questions = module.questions or []
+
     target_q = None
+
     for idx, q in enumerate(raw_questions):
         q_id = str(q.get("question_id", idx))
+
         if q_id == payload.question_id:
             target_q = q
             break
@@ -107,66 +158,145 @@ async def check_question_answer(
     if not target_q:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Question not found in specified practice module."
+            detail="Question not found in specified practice module.",
         )
 
-    correct_ans = str(target_q.get("correct_answer", ""))
-    is_correct = (payload.selected_answer.strip().lower() == correct_ans.strip().lower())
-    explanation = target_q.get("explanation", "No explanation provided for this question.")
+    correct_ans = str(
+        target_q.get("correct_answer", "")
+    )
+
+    is_correct = (
+        payload.selected_answer.strip().lower()
+        == correct_ans.strip().lower()
+    )
+
+    explanation = target_q.get(
+        "explanation",
+        "No explanation provided for this question.",
+    )
 
     return PracticeCheckAnswerResponse(
         question_id=payload.question_id,
         selected_answer=payload.selected_answer,
         is_correct=is_correct,
         correct_answer=correct_ans,
-        explanation=explanation
+        explanation=explanation,
     )
 
-@router.post("/modules/{id}/submit", response_model=PracticeAttemptResponse, status_code=status.HTTP_200_OK)
+
+@router.post(
+    "/modules/{id}/submit",
+    response_model=PracticeAttemptResponse,
+    status_code=status.HTTP_200_OK,
+)
 async def submit_module_attempt(
     id: UUID,
     payload: PracticeSubmitRequest,
-    current_user: dict = Depends(get_current_user),
+    current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """
-    POST /api/practice/modules/{id}/submit (Protected: Bearer)
-    Finalizes a practice module attempt, persists it to practice.attempts, and returns learning summary metrics.
+    POST /api/practice/modules/{id}/submit
+
+    Protected endpoint.
+
+    Finalizes the practice attempt and saves it
+    against the currently authenticated user.
     """
-    module = db.query(PracticeModule).filter(PracticeModule.id == id, PracticeModule.is_active.is_(True)).first()
+
+    # ---------------------------------------------------------
+    # 1. Find the practice module
+    # ---------------------------------------------------------
+
+    module = (
+        db.query(PracticeModule)
+        .filter(
+            PracticeModule.id == id,
+            PracticeModule.is_active.is_(True),
+        )
+        .first()
+    )
+
     if not module:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Practice module not found."
+            detail="Practice module not found.",
         )
 
+    # ---------------------------------------------------------
+    # 2. Prepare questions
+    # ---------------------------------------------------------
+
     raw_questions = module.questions or []
+
     questions_by_id = {
-        str(q.get("question_id", idx)): q for idx, q in enumerate(raw_questions)
+        str(q.get("question_id", idx)): q
+        for idx, q in enumerate(raw_questions)
     }
+
+    # ---------------------------------------------------------
+    # 3. Calculate score
+    # ---------------------------------------------------------
 
     correct_count = 0
     total_attempted = len(payload.answers)
 
     for item in payload.answers:
         q_data = questions_by_id.get(item.question_id)
-        if q_data and q_data.get("correct_answer", "").strip().lower() == item.selected_answer.strip().lower():
+
+        if not q_data:
+            continue
+
+        correct_answer = str(
+            q_data.get("correct_answer", "")
+        ).strip().lower()
+
+        selected_answer = (
+            item.selected_answer.strip().lower()
+        )
+
+        if correct_answer == selected_answer:
             correct_count += 1
 
-    incorrect_count = total_attempted - correct_count
-    accuracy = (correct_count / total_attempted * 100.0) if total_attempted > 0 else 0.0
+    incorrect_count = (
+        total_attempted - correct_count
+    )
+
+    accuracy = (
+        (correct_count / total_attempted) * 100.0
+        if total_attempted > 0
+        else 0.0
+    )
+
+    # ---------------------------------------------------------
+    # 4. Create feedback
+    # ---------------------------------------------------------
 
     feedback_text = (
-        f"Completed practice with {correct_count}/{total_attempted} correct answers "
+        f"Completed practice with "
+        f"{correct_count}/{total_attempted} "
+        f"correct answers "
         f"({accuracy:.1f}% accuracy)."
     )
 
-    # Candidate ID from current_user or default UUID
-    user_id_str = current_user.get("id") if isinstance(current_user, dict) else None
-    try:
-        candidate_uuid = UUID(user_id_str) if user_id_str else UUID("123e4567-e89b-12d3-a456-426614174000")
-    except (ValueError, TypeError):
-        candidate_uuid = UUID("123e4567-e89b-12d3-a456-426614174000")
+    # ---------------------------------------------------------
+    # 5. IMPORTANT:
+    #    Use the REAL authenticated user's ID.
+    #
+    #    get_current_user() returns a User object,
+    #    NOT a dictionary.
+    #
+    #    Therefore we use:
+    #        current_user.id
+    #
+    #    This fixes the previous fake UUID problem.
+    # ---------------------------------------------------------
+
+    candidate_uuid = current_user.id
+
+    # ---------------------------------------------------------
+    # 6. Create practice attempt
+    # ---------------------------------------------------------
 
     attempt = PracticeAttempt(
         id=uuid4(),
@@ -174,12 +304,26 @@ async def submit_module_attempt(
         module_id=module.id,
         score=accuracy,
         feedback=feedback_text,
-        attempted_at=datetime.now(timezone.utc)
+        attempted_at=datetime.now(timezone.utc),
     )
 
     db.add(attempt)
-    db.commit()
-    db.refresh(attempt)
+
+    # ---------------------------------------------------------
+    # 7. Save to PostgreSQL
+    # ---------------------------------------------------------
+
+    try:
+        db.commit()
+        db.refresh(attempt)
+
+    except Exception:
+        db.rollback()
+        raise
+
+    # ---------------------------------------------------------
+    # 8. Return practice result
+    # ---------------------------------------------------------
 
     return PracticeAttemptResponse(
         attempt_id=attempt.id,
@@ -189,7 +333,7 @@ async def submit_module_attempt(
         correct_answers=correct_count,
         incorrect_answers=incorrect_count,
         accuracy_percentage=round(accuracy, 2),
-        score=float(attempt.score) if attempt.score is not None else round(accuracy, 2),
+        score=float(attempt.score),
         feedback=attempt.feedback,
-        attempted_at=attempt.attempted_at
+        attempted_at=attempt.attempted_at,
     )
