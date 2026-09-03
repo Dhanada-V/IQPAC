@@ -42,11 +42,13 @@ export async function fetchPracticeModules() {
     return MOCK_MODULES;
   }
 
-  // Get the real JWT token saved during login.
+  // Get the JWT token saved during login.
   const token = localStorage.getItem('access_token');
 
   if (!token) {
-    throw new Error('You are not logged in. Please login again.');
+    throw new Error(
+      'You are not logged in. Please login again.'
+    );
   }
 
   const response = await fetch('/api/practice/modules', {
@@ -111,10 +113,14 @@ export default function Practice() {
 
   return (
     <div className="page-card">
-      <span className="badge">Practice Module</span>
+      <span className="badge">
+        Practice Module
+      </span>
 
       <div className="page-header">
-        <h1 className="page-title">Practice</h1>
+        <h1 className="page-title">
+          Practice
+        </h1>
 
         <p className="page-subtitle">
           Practice your skills and improve your weak areas.
@@ -123,7 +129,10 @@ export default function Practice() {
 
       {/* Loading */}
       {status === 'loading' && (
-        <p className="status-message" role="status">
+        <p
+          className="status-message"
+          role="status"
+        >
           Loading practice modules…
         </p>
       )}
@@ -147,44 +156,51 @@ export default function Practice() {
       )}
 
       {/* No modules */}
-      {status === 'success' && modules.length === 0 && (
-        <p className="status-message" role="status">
-          No practice modules are available yet.
-        </p>
-      )}
+      {status === 'success' &&
+        modules.length === 0 && (
+          <p
+            className="status-message"
+            role="status"
+          >
+            No practice modules are available yet.
+          </p>
+        )}
 
       {/* Modules */}
-      {status === 'success' && modules.length > 0 && (
-        <div className="module-grid">
-          {modules.map((module) => (
-            <article
-              className="module-card"
-              key={module.id}
-            >
-              <p className="module-domain">
-                {module.domain}
-              </p>
-
-              <h2 className="module-name">
-                {module.title}
-              </h2>
-
-              <p className="module-description">
-                {module.description ||
-                  'No description provided.'}
-              </p>
-
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={() => startPractice(module)}
+      {status === 'success' &&
+        modules.length > 0 && (
+          <div className="module-grid">
+            {modules.map((module) => (
+              <article
+                className="module-card"
+                key={module.id}
               >
-                Start Practice
-              </button>
-            </article>
-          ))}
-        </div>
-      )}
+                <p className="module-domain">
+                  {module.domain}
+                </p>
+
+                <h2 className="module-name">
+                  {module.title}
+                </h2>
+
+                <p className="module-description">
+                  {module.description ||
+                    'No description provided.'}
+                </p>
+
+                <button
+                  type="button"
+                  className="primary-button"
+                  onClick={() =>
+                    startPractice(module)
+                  }
+                >
+                  Start Practice
+                </button>
+              </article>
+            ))}
+          </div>
+        )}
     </div>
   );
 }

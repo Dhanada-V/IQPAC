@@ -48,8 +48,8 @@ export default function Login() {
       if (!response.ok) {
         throw new Error(
           data.detail ||
-          data.message ||
-          'Login failed. Please check your email and password.'
+            data.message ||
+            'Login failed. Please check your email and password.'
         );
       }
 
@@ -76,32 +76,48 @@ export default function Login() {
   return (
     <div
       className="page-card"
-      style={{ maxWidth: '520px', margin: '0 auto' }}
+      style={{
+        maxWidth: '520px',
+        margin: '0 auto',
+      }}
     >
-      <span className="badge">Auth Module</span>
+      {/* Module Badge */}
+      <span className="badge">
+        Auth Module
+      </span>
 
+      {/* Header */}
       <div className="page-header">
-        <h1 className="page-title">Welcome Back</h1>
+        <h1 className="page-title">
+          Welcome Back
+        </h1>
 
         <p className="page-subtitle">
           Login to your iQPAC candidate account.
         </p>
       </div>
 
+      {/* Error */}
       {error && (
         <div
           className="alert-box alert-error"
-          style={{ marginBottom: '1.5rem' }}
+          style={{
+            marginBottom: '1.5rem',
+          }}
         >
           ⚠️ {error}
         </div>
       )}
 
+      {/* Login Form */}
       <form onSubmit={handleSubmit}>
 
         {/* Email */}
         <div className="form-group">
-          <label className="form-label" htmlFor="email">
+          <label
+            className="form-label"
+            htmlFor="email"
+          >
             Email Address *
           </label>
 
@@ -119,7 +135,10 @@ export default function Login() {
 
         {/* Password */}
         <div className="form-group">
-          <label className="form-label" htmlFor="password">
+          <label
+            className="form-label"
+            htmlFor="password"
+          >
             Password *
           </label>
 
@@ -135,18 +154,24 @@ export default function Login() {
           />
         </div>
 
-        {/* Login button */}
+        {/* Login Button */}
         <button
           type="submit"
-          className="btn btn-primary"
+          className="primary-button"
           disabled={loading}
-          style={{ width: '100%', marginTop: '1rem' }}
+          style={{
+            width: '100%',
+            marginTop: '1rem',
+          }}
         >
-          {loading ? 'Logging in...' : 'Login'}
+          {loading
+            ? 'Logging in...'
+            : 'Login'}
         </button>
 
       </form>
 
+      {/* Register Link */}
       <p
         style={{
           textAlign: 'center',
@@ -159,7 +184,7 @@ export default function Login() {
         <Link
           to="/register"
           style={{
-            color: '#818cf8',
+            color: 'var(--primary-color)',
             fontWeight: 600,
             textDecoration: 'none',
           }}

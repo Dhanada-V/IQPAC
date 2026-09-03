@@ -14,10 +14,9 @@ export default function Score() {
       setError(null);
 
       try {
-        /*
-         * Get the session ID saved after completing the assessment.
-         */
-        const sessionId = localStorage.getItem('assessment_session_id');
+        const sessionId = localStorage.getItem(
+          'assessment_session_id'
+        );
 
         if (!sessionId) {
           throw new Error(
@@ -51,7 +50,9 @@ export default function Score() {
         setScore(data);
       } catch (err) {
         console.error('Score error:', err);
-        setError(err.message || 'Unable to load assessment score.');
+        setError(
+          err.message || 'Unable to load assessment score.'
+        );
       } finally {
         setLoading(false);
       }
@@ -60,16 +61,20 @@ export default function Score() {
     fetchScore();
   }, [token]);
 
-  /*
-   * Loading
-   */
+  /* =========================
+     LOADING
+     ========================= */
+
   if (loading) {
     return (
       <div className="page-card">
         <span className="badge">Assessment Module</span>
 
         <div className="page-header">
-          <h1 className="page-title">Assessment Score</h1>
+          <h1 className="page-title">
+            Assessment Score
+          </h1>
+
           <p className="page-subtitle">
             Loading your assessment result...
           </p>
@@ -77,22 +82,27 @@ export default function Score() {
 
         <div className="loading-container">
           <div className="spinner"></div>
+
           <span>Loading score...</span>
         </div>
       </div>
     );
   }
 
-  /*
-   * Error
-   */
+  /* =========================
+     ERROR
+     ========================= */
+
   if (error) {
     return (
       <div className="page-card">
         <span className="badge">Assessment Module</span>
 
         <div className="page-header">
-          <h1 className="page-title">Assessment Score</h1>
+          <h1 className="page-title">
+            Assessment Score
+          </h1>
+
           <p className="page-subtitle">
             We could not load your assessment result.
           </p>
@@ -106,7 +116,6 @@ export default function Score() {
         <Link
           to="/assessment"
           className="btn btn-primary"
-          style={{ textDecoration: 'none' }}
         >
           Take Assessment
         </Link>
@@ -114,39 +123,41 @@ export default function Score() {
     );
   }
 
-  /*
-   * No score
-   */
+  /* =========================
+     NO SCORE
+     ========================= */
+
   if (!score) {
     return (
       <div className="page-card">
         <span className="badge">Assessment Module</span>
 
         <div className="page-header">
-          <h1 className="page-title">Assessment Score</h1>
+          <h1 className="page-title">
+            Assessment Score
+          </h1>
+
           <p className="page-subtitle">
             No assessment result is available.
           </p>
         </div>
 
         <div className="empty-state">
-          <div className="empty-icon">📊</div>
+          <div className="empty-icon">
+            📊
+          </div>
 
-          <h3>No Score Available</h3>
+          <h3>
+            No Score Available
+          </h3>
 
-          <p
-            style={{
-              color: 'var(--text-muted)',
-              margin: '0.5rem 0 1.5rem',
-            }}
-          >
+          <p className="score-empty-description">
             Complete an assessment to view your score.
           </p>
 
           <Link
             to="/assessment"
             className="btn btn-primary"
-            style={{ textDecoration: 'none' }}
           >
             Start Assessment
           </Link>
@@ -155,9 +166,10 @@ export default function Score() {
     );
   }
 
-  /*
-   * Support common API field names.
-   */
+  /* =========================
+     SCORE DATA
+     ========================= */
+
   const totalQuestions =
     score.total_questions ??
     score.total ??
@@ -174,13 +186,18 @@ export default function Score() {
     score.incorrect_answers ??
     score.incorrect ??
     score.incorrect_count ??
-    Math.max(totalQuestions - correctAnswers, 0);
+    Math.max(
+      totalQuestions - correctAnswers,
+      0
+    );
 
   const percentage =
     score.percentage ??
     score.score_percentage ??
     (totalQuestions > 0
-      ? Math.round((correctAnswers / totalQuestions) * 100)
+      ? Math.round(
+          (correctAnswers / totalQuestions) * 100
+        )
       : 0);
 
   const finalScore =
@@ -188,67 +205,54 @@ export default function Score() {
     score.total_score ??
     correctAnswers;
 
+  /* =========================
+     MAIN SCORE PAGE
+     ========================= */
+
   return (
     <div className="page-card">
-      <span className="badge">Assessment Module</span>
+      <span className="badge">
+        Assessment Module
+      </span>
 
       <div className="page-header">
-        <h1 className="page-title">Assessment Score</h1>
+        <h1 className="page-title">
+          Assessment Score
+        </h1>
 
         <p className="page-subtitle">
           Here is your iQPAC assessment result.
         </p>
       </div>
 
-      {/* Main Score */}
-      <div
-        style={{
-          marginTop: '24px',
-          padding: '40px 24px',
-          textAlign: 'center',
-          background: '#111a2d',
-          border: '1px solid #293653',
-          borderRadius: '16px',
-        }}
-      >
-        <div
-          style={{
-            fontSize: '56px',
-            fontWeight: '800',
-            color: '#818cf8',
-          }}
-        >
+      {/* =========================
+          MAIN SCORE
+         ========================= */}
+
+      <div className="main-score-card">
+        <div className="main-score-value">
           {finalScore}
         </div>
 
-        <div
-          style={{
-            marginTop: '4px',
-            color: '#8fa8cf',
-            fontSize: '15px',
-          }}
-        >
+        <div className="main-score-label">
           Your Score
         </div>
 
-        <div
-          style={{
-            marginTop: '12px',
-            fontSize: '28px',
-            fontWeight: '700',
-            color: '#ffffff',
-          }}
-        >
+        <div className="main-score-percentage">
           {percentage}%
         </div>
       </div>
 
-      {/* Metrics */}
-      <div className="metrics-grid" style={{ marginTop: '24px' }}>
+      {/* =========================
+          METRICS
+         ========================= */}
+
+      <div className="metrics-grid score-metrics">
         <div className="metric-box metric-accent">
           <span className="metric-value">
             {totalQuestions}
           </span>
+
           <span className="metric-label">
             Total Questions
           </span>
@@ -258,6 +262,7 @@ export default function Score() {
           <span className="metric-value">
             {correctAnswers}
           </span>
+
           <span className="metric-label">
             Correct
           </span>
@@ -267,6 +272,7 @@ export default function Score() {
           <span className="metric-value">
             {incorrectAnswers}
           </span>
+
           <span className="metric-label">
             Incorrect
           </span>
@@ -276,55 +282,53 @@ export default function Score() {
           <span className="metric-value">
             {percentage}%
           </span>
+
           <span className="metric-label">
             Percentage
           </span>
         </div>
       </div>
 
-      {/* Result message */}
-      <div
-        className="status-panel"
-        style={{ marginTop: '24px' }}
-      >
+      {/* =========================
+          ASSESSMENT SUMMARY
+         ========================= */}
+
+      <div className="status-panel score-summary">
         <h3 className="section-heading">
           Assessment Summary
         </h3>
 
-        <p style={{ color: 'var(--text-muted)' }}>
-          You answered {correctAnswers} out of {totalQuestions}{' '}
-          questions correctly.
+        <p className="score-summary-text">
+          You answered {correctAnswers} out of{' '}
+          {totalQuestions} questions correctly.
         </p>
 
         {percentage >= 80 ? (
           <div className="alert-box alert-success">
-            🎉 Excellent performance! Keep up the great work.
+            🎉 Excellent performance! Keep up the
+            great work.
           </div>
         ) : percentage >= 50 ? (
           <div className="alert-box alert-info">
-            👍 Good attempt! Continue practicing to improve your score.
+            👍 Good attempt! Continue practicing to
+            improve your score.
           </div>
         ) : (
           <div className="alert-box alert-error">
-            💪 Keep practicing. You can improve your result with more
-            preparation.
+            💪 Keep practicing. You can improve your
+            result with more preparation.
           </div>
         )}
       </div>
 
-      {/* Actions */}
-      <div
-        style={{
-          display: 'flex',
-          gap: '1rem',
-          marginTop: '24px',
-          flexWrap: 'wrap',
-        }}
-      >
+      {/* =========================
+          ACTIONS
+         ========================= */}
+
+      <div className="score-actions">
         <Link
           to="/assessment"
           className="btn btn-primary"
-          style={{ textDecoration: 'none' }}
         >
           Retake Assessment
         </Link>
@@ -332,14 +336,18 @@ export default function Score() {
         <Link
           to="/profile"
           className="btn btn-secondary"
-          style={{ textDecoration: 'none' }}
         >
           View Profile
         </Link>
       </div>
 
-      <div className="route-info" style={{ marginTop: '24px' }}>
-        Route: /score | Endpoint: GET /api/assessment/score/{'{session_id}'}
+      {/* =========================
+          ROUTE INFO
+         ========================= */}
+
+      <div className="route-info score-route-info">
+        Route: /score | Endpoint:
+        GET /api/assessment/score/{'{session_id}'}
       </div>
     </div>
   );
